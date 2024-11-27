@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { BenefitsController } from './benefits.controller';
 import { BenefitsService } from './benefits.service';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [],
+  imports: [AuthModule],
   controllers: [BenefitsController],
   providers: [BenefitsService],
 })

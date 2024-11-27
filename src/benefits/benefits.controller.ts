@@ -12,7 +12,8 @@ export class BenefitsController {
 
   @Get()
   @UsePipes(new ZodValidationPipe(fetchBenefitsQueryDTOSchema))
-  getBenefits(@Query() query: FetchBenefitsQueryDTO): string {
-    return this.benefitsService.getHello(query);
+  async getBenefits(@Query() query: FetchBenefitsQueryDTO): Promise<string> {
+    return await this.benefitsService.getHello(query);
   }
 }
+
