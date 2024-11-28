@@ -23,13 +23,17 @@ export class AuthService {
 
     return firstValueFrom(this.httpService.post(url, credentials))
       .then((response) => {
-        console.log('Token response:', response.data);
-        this.token = response.data.data.token;
-        this.tokenExpiresAt = new Date(Date.now() + 3600 * 500);
+        console.log('response:', response.data.data);
+
+        this.token = `${response.data.data.type} ${response.data.data.token}`;
+        this.tokenExpiresAt = new Date(response.data.data.expiresIn);
+
+        console.log('Token:', this.token);
+        console.log('tokenExpiresAt:', this.tokenExpiresAt);
       })
       .catch((error) => {
         console.error('Error fetching token:', error.message);
-        throw new Error(`Failed to generate token: ${error.message}`);
+        throw new Error(`Failed to fetch token: ${error.message}`);
       });
   }
 

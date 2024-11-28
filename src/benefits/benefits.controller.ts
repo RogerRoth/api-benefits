@@ -5,6 +5,7 @@ import {
   fetchBenefitsQueryDTOSchema,
 } from './dtos/fetch-benefits-query.dto';
 import { ZodValidationPipe } from 'src/pipes/zod-validation-pipe';
+import { FetchBenefitsResponseDTO } from './dtos/fetch-benefits-response.dto';
 
 @Controller('benefits')
 export class BenefitsController {
@@ -12,8 +13,10 @@ export class BenefitsController {
 
   @Get()
   @UsePipes(new ZodValidationPipe(fetchBenefitsQueryDTOSchema))
-  async getBenefits(@Query() query: FetchBenefitsQueryDTO): Promise<string> {
-    return await this.benefitsService.getHello(query);
+  async getBenefits(
+    @Query() query: FetchBenefitsQueryDTO,
+  ): Promise<FetchBenefitsResponseDTO> {
+    return await this.benefitsService.getBenefits(query);
   }
 }
 
