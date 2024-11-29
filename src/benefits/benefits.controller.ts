@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UsePipes } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, UsePipes } from '@nestjs/common';
 import { BenefitsService } from './benefits.service';
 import {
   FetchBenefitsQueryDTO,
@@ -15,8 +15,18 @@ export class BenefitsController {
   @UsePipes(new ZodValidationPipe(fetchBenefitsQueryDTOSchema))
   async getBenefits(
     @Query() query: FetchBenefitsQueryDTO,
-  ): Promise<FetchBenefitsResponseDTO> {
-    return await this.benefitsService.getBenefits(query);
+  ): Promise<FetchBenefitsResponseDTO | object> {
+    const data = await this.benefitsService.getBenefits(query);
+
+    if (data) {
+      return data;
+    }
+
+    return {
+      statusCode: HttpStatus.ACCEPTED,
+      message:
+        'Busca em processamento. Por favor, verifique novamente em alguns instantes.',
+    };
   }
 }
 

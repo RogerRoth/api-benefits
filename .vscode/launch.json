@@ -4,11 +4,13 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch NestJS App (TS)",
-      "program": "${workspaceFolder}/src/main.ts",
-      "runtimeArgs": ["-r", "ts-node/register"],
+      "name": "Debug NestJS App",
+      "args": ["${workspaceFolder}/src/main.ts"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register", "-r", "tsconfig-paths/register"],
       "sourceMaps": true,
-      "cwd": "${workspaceFolder}"
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceRoot}",
+      "console": "integratedTerminal"
     }
   ]
 }

@@ -1,10 +1,10 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { EnvService } from 'src/env/env.service';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   private token: string | null = null;
   private tokenExpiresAt: Date | null = null;
 
@@ -12,6 +12,10 @@ export class AuthService {
     private readonly httpService: HttpService,
     private readonly envService: EnvService,
   ) {}
+
+  async onModuleInit() {
+    await this.fetchToken();
+  }
 
   private async fetchToken(): Promise<void> {
     const baseUrl = this.envService.get('KONSI_BASE_URL');
@@ -23,16 +27,10 @@ export class AuthService {
 
     return firstValueFrom(this.httpService.post(url, credentials))
       .then((response) => {
-        console.log('response:', response.data.data);
-
         this.token = `${response.data.data.type} ${response.data.data.token}`;
         this.tokenExpiresAt = new Date(response.data.data.expiresIn);
-
-        console.log('Token:', this.token);
-        console.log('tokenExpiresAt:', this.tokenExpiresAt);
       })
       .catch((error) => {
-        console.error('Error fetching token:', error.message);
         throw new Error(`Failed to fetch token: ${error.message}`);
       });
   }

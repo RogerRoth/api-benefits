@@ -43,7 +43,7 @@ export class SearchService {
       index: indexName,
       body: {
         query: {
-          match: { indexSearch },
+          match: { _id: indexSearch },
         },
       },
     });

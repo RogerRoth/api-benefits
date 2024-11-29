@@ -1,51 +1,45 @@
 import { Injectable } from '@nestjs/common';
 import { FetchBenefitsQueryDTO } from './dtos/fetch-benefits-query.dto';
-import { AuthService } from 'src/auth/auth.service';
-import { EnvService } from 'src/env/env.service';
-import { firstValueFrom } from 'rxjs';
-import { HttpService } from '@nestjs/axios';
-import {
-  FetchBenefitsResponseDTO,
-  fetchBenefitsResponseDTOSchema,
-} from './dtos/fetch-benefits-response.dto';
+import { FetchBenefitsResponseDTO } from './dtos/fetch-benefits-response.dto';
+import { SearchService } from 'src/search/search.service';
+import { RedisService } from 'src/redis/redis.service';
+import { RabbitMQService } from 'src/rabbitMQ/rabbitmq.service';
+import { QueueMessageType } from 'src/shared/queue-message.type';
 
 @Injectable()
 export class BenefitsService {
+  private indexName = 'benefits';
+
   constructor(
-    private readonly authService: AuthService,
-    private readonly envService: EnvService,
-    private readonly httpService: HttpService,
+    private readonly searchService: SearchService,
+    private readonly redisService: RedisService,
+    private readonly rabbitMQService: RabbitMQService,
   ) {}
 
   async getBenefits(
     query: FetchBenefitsQueryDTO,
-  ): Promise<FetchBenefitsResponseDTO> {
+  ): Promise<FetchBenefitsResponseDTO | null> {
     const { cpf } = query;
 
-    const data = this.getBenefitsUser(cpf);
+    const index = await this.redisService.get(cpf);
 
-    return data;
-  }
-
-  async getBenefitsUser(cpf: string): Promise<FetchBenefitsResponseDTO> {
-    const baseUrl = this.envService.get('KONSI_BASE_URL');
-    const url = `${baseUrl}/api/v1/inss/consulta-beneficios?cpf=${cpf}`;
-    const jwt = await this.authService.getToken();
-
-    try {
-      const response = await firstValueFrom(
-        this.httpService.get(url, {
-          headers: {
-            Authorization: jwt,
-          },
-        }),
+    if (index) {
+      const benefits = await this.searchService.getDataByIndex(
+        index,
+        this.indexName,
       );
-
-      const data = response.data.data;
-      return fetchBenefitsResponseDTOSchema.parse(data);
-    } catch (error) {
-      console.error('Error fetching user benefits:', error.message);
-      throw new Error(`Failed to fetch user benefits: ${error.message}`);
+      if (benefits) {
+        return benefits;
+      }
     }
+
+    const message: QueueMessageType = {
+      cpf,
+      indexName: this.indexName,
+    };
+
+    await this.rabbitMQService.enqueueCpf(message);
+
+    return null;
   }
 }

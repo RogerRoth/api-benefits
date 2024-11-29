@@ -3,6 +3,7 @@ import { BenefitsModule } from './benefits/benefits.module';
 import { ConfigModule } from '@nestjs/config';
 import { envSchema } from './env/env';
 import { EnvModule } from './env/env.module';
+import { RabbitMQModule } from './rabbitMQ/rabbitmq.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { EnvModule } from './env/env.module';
       isGlobal: true,
     }),
     EnvModule,
+    RabbitMQModule,
   ],
 })
 export class AppModule {}
