@@ -1,9 +1,4 @@
-import {
-  HttpException,
-  Inject,
-  Injectable,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { SearchService } from '../search/search.service';
 import { Payload, ClientProxy } from '@nestjs/microservices';
 import { EnvService } from 'src/env/env.service';
@@ -18,7 +13,6 @@ import { HttpService } from '@nestjs/axios';
 import { AppLoggerService } from 'src/utils/logger/app-logger.service';
 import { QueueMessageType } from './types/queue-message.type';
 import { RabbitMQEnqueueException } from './exceptions/rabbitmq-enqueue.exception';
-import { RabbitMQProcessingException } from './exceptions/rabbitmq-processing.exception';
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit {
@@ -69,14 +63,10 @@ export class RabbitMQService implements OnModuleInit {
     } catch (error) {
       await this.redisService.set(`deduplication-${cpf}`, 'error');
 
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      throw new RabbitMQProcessingException(
-        JSON.stringify(message),
-        error.message,
+      this.logger.error(
+        `Erro no processamento do CPF: ${cpf} - ${error.message}`,
       );
+      return { success: false, message: error.message };
     }
   }
 
@@ -87,6 +77,11 @@ export class RabbitMQService implements OnModuleInit {
     const url = `${baseUrl}/api/v1/inss/consulta-beneficios?cpf=${cpf}`;
     const jwt = await this.authService.getToken();
 
+    let data = {
+      cpf,
+      beneficios: [],
+    };
+
     try {
       const response = await firstValueFrom(
         this.httpService.get(url, {
@@ -96,13 +91,12 @@ export class RabbitMQService implements OnModuleInit {
         }),
       );
 
-      const data = response.data.data;
-      return fetchBenefitsResponseDTOSchema.parse(data);
+      data = response.data.data;
     } catch (error) {
-      throw new HttpException(
-        `Failed to fetch user benefits: ${error.message}`,
-        error.statusCode,
-      );
+      this.logger.warn(`CPF not found:"${cpf}"`);
+      return;
+    } finally {
+      return fetchBenefitsResponseDTOSchema.parse(data);
     }
   }
 }
