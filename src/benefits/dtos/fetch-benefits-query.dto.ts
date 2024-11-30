@@ -10,4 +10,3 @@ export const fetchBenefitsQueryDTOSchema = z.object({
 });
 
 export type FetchBenefitsQueryDTO = z.infer<typeof fetchBenefitsQueryDTOSchema>;
-

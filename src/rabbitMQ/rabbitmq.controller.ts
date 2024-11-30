@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { RabbitMQService } from './rabbitmq.service';
-import { QueueMessageType } from 'src/shared/queue-message.type';
+import { QueueMessageType } from './types/queue-message.type';
 
 @Controller()
 export class RabbitMQController {
@@ -12,4 +12,3 @@ export class RabbitMQController {
     return this.rabbitMQService.processCPF(message);
   }
 }
-

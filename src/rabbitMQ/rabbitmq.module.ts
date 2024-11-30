@@ -9,6 +9,7 @@ import { RedisModule } from 'src/redis/redis.module';
 import { RabbitMQController } from './rabbitmq.controller';
 import { AuthModule } from 'src/auth/auth.module';
 import { HttpModule } from '@nestjs/axios';
+import { AppLoggerModule } from 'src/utils/logger/app-logger.module';
 
 @Module({
   imports: [
@@ -25,7 +26,9 @@ import { HttpModule } from '@nestjs/axios';
               durable: true,
             },
             socketOptions: {
-              heartbeatIntervalInSeconds: 900,
+              heartbeatIntervalInSeconds: Number(
+                envService.get('RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS'),
+              ),
             },
           },
         }),
@@ -37,10 +40,10 @@ import { HttpModule } from '@nestjs/axios';
     SearchModule,
     AuthModule,
     HttpModule,
+    AppLoggerModule,
   ],
   controllers: [RabbitMQController],
   providers: [RabbitMQService],
   exports: [RabbitMQService, ClientsModule],
 })
 export class RabbitMQModule {}
-

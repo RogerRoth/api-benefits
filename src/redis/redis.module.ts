@@ -8,4 +8,3 @@ import { EnvModule } from 'src/env/env.module';
   exports: [RedisService],
 })
 export class RedisModule {}
-

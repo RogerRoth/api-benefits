@@ -9,9 +9,12 @@ export const envSchema = z.object({
   ELASTIC_SEARCH_PASSWORD: z.string(),
   RABBITMQ_URL: z.string(),
   RABBITMQ_QUEUE: z.string(),
+  RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS: z.coerce
+    .number()
+    .optional()
+    .default(90),
   REDIS_URL: z.string(),
   PORT: z.coerce.number().optional().default(3000),
 });
 
 export type Env = z.infer<typeof envSchema>;
-

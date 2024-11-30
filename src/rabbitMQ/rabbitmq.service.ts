@@ -1,9 +1,13 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common';
 import { SearchService } from '../search/search.service';
 import { Payload, ClientProxy } from '@nestjs/microservices';
 import { EnvService } from 'src/env/env.service';
 import { RedisService } from 'src/redis/redis.service';
-import { QueueMessageType } from 'src/shared/queue-message.type';
 import {
   FetchBenefitsResponseDTO,
   fetchBenefitsResponseDTOSchema,
@@ -11,6 +15,10 @@ import {
 import { AuthService } from 'src/auth/auth.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { AppLoggerService } from 'src/utils/logger/app-logger.service';
+import { QueueMessageType } from './types/queue-message.type';
+import { RabbitMQEnqueueException } from './exceptions/rabbitmq-enqueue.exception';
+import { RabbitMQProcessingException } from './exceptions/rabbitmq-processing.exception';
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit {
@@ -23,42 +31,52 @@ export class RabbitMQService implements OnModuleInit {
     private readonly envService: EnvService,
     private readonly authService: AuthService,
     private readonly httpService: HttpService,
+    private readonly logger: AppLoggerService,
   ) {}
 
   async onModuleInit() {
     this.queueName = this.envService.get('RABBITMQ_QUEUE');
-
-    console.log('RabbitMQ module initialized');
   }
 
   async enqueueCpf(message: QueueMessageType): Promise<void> {
-    this.client.send(this.queueName, message).subscribe({
-      next: () => console.log(`Mensagem ${message} enviado para a fila`),
-      error: (error) => console.error('Erro ao enfileirar Mensagem:', error),
-    });
+    try {
+      this.client.send(this.queueName, message).subscribe({
+        error: (error) => {
+          throw new RabbitMQEnqueueException(this.queueName, error.message);
+        },
+      });
+    } catch (error) {
+      throw new RabbitMQEnqueueException(this.queueName, error.message);
+    }
   }
 
   async processCPF(@Payload() message: QueueMessageType) {
-    console.log(`processCPF iniciado`);
-
     const { cpf, indexName } = message;
 
-    const deduplication = await this.redisService.get(`deduplication-${cpf}`);
-
-    if (deduplication == 'processed') {
-      console.log(`Mensagem duplicada ignorada: ${cpf}`);
-      return;
-    }
-    await this.redisService.set(`deduplication-${cpf}`, 'processed');
-
     try {
+      const deduplication = await this.redisService.get(`deduplication-${cpf}`);
+
+      if (deduplication == 'processed') {
+        this.logger.warn(`Duplicated message ignored CPF:"${cpf}"`);
+        return;
+      }
+      await this.redisService.set(`deduplication-${cpf}`, 'processed');
+
       const benefits = await this.getBenefitsUser(cpf);
 
       const index = await this.searchService.indexData(benefits, indexName);
       await this.redisService.set(cpf, index);
     } catch (error) {
       await this.redisService.set(`deduplication-${cpf}`, 'error');
-      console.error('Erro ao processar CPF:', error);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new RabbitMQProcessingException(
+        JSON.stringify(message),
+        error.message,
+      );
     }
   }
 
@@ -81,9 +99,10 @@ export class RabbitMQService implements OnModuleInit {
       const data = response.data.data;
       return fetchBenefitsResponseDTOSchema.parse(data);
     } catch (error) {
-      console.error('Error fetching user benefits:', error.message);
-      throw new Error(`Failed to fetch user benefits: ${error.message}`);
+      throw new HttpException(
+        `Failed to fetch user benefits: ${error.message}`,
+        error.statusCode,
+      );
     }
   }
 }
-

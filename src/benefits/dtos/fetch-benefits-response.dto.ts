@@ -13,4 +13,3 @@ export const fetchBenefitsResponseDTOSchema = z.object({
 export type FetchBenefitsResponseDTO = z.infer<
   typeof fetchBenefitsResponseDTOSchema
 >;
-

@@ -4,7 +4,7 @@ import { FetchBenefitsResponseDTO } from './dtos/fetch-benefits-response.dto';
 import { SearchService } from 'src/search/search.service';
 import { RedisService } from 'src/redis/redis.service';
 import { RabbitMQService } from 'src/rabbitMQ/rabbitmq.service';
-import { QueueMessageType } from 'src/shared/queue-message.type';
+import { QueueMessageType } from 'src/rabbitMQ/types/queue-message.type';
 
 @Injectable()
 export class BenefitsService {

@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { HttpException, Injectable, OnModuleInit } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { EnvService } from 'src/env/env.service';
 
@@ -31,7 +31,10 @@ export class AuthService implements OnModuleInit {
         this.tokenExpiresAt = new Date(response.data.data.expiresIn);
       })
       .catch((error) => {
-        throw new Error(`Failed to fetch token: ${error.message}`);
+        throw new HttpException(
+          `Failed to fetch token: ${error.message}`,
+          error.statusCode,
+        );
       });
   }
 
@@ -45,4 +48,3 @@ export class AuthService implements OnModuleInit {
     return Promise.resolve(this.token);
   }
 }
-

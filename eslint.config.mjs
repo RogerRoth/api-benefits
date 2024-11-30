@@ -10,7 +10,8 @@ export default [
     languageOptions: { globals: globals.node },
     rules: {
       "no-useless-constructor": "off",
-      "no-new": "off"
+      "no-new": "off",
+      "no-explicit-any": true
     }
   },
   pluginJs.configs.recommended,

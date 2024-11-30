@@ -23,4 +23,3 @@ import { EnvService } from 'src/env/env.service';
   exports: [SearchService],
 })
 export class SearchModule {}
-

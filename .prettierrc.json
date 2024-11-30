@@ -3,5 +3,5 @@
   "trailingComma": "all",
   "bracketSpacing": true,
   "semi": true,
-  "endOfLine": "crlf"
+  "insertFinalNewLine": true
 }
