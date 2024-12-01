@@ -8,16 +8,13 @@
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      margin-top: 100px;
-      margin-right: 0px;
-      margin-bottom: 20px;
-      margin-left: 0px;
+      margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
     .container {
       max-width: 600px;
-      margin: 0 auto;
+      margin: 100px auto 20px;
       text-align: center;
     }
     .input-group {
@@ -50,25 +47,17 @@
       background-color: #5ba3f0;
       cursor: not-allowed;
     }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      background: #f4f4f4;
-      padding: 10px;
-      margin: 5px 0;
-      border: 1px solid #ddd;
-    }
     .message {
       color: red;
       font-weight: 400;
+      margin-top: 10px;
+      height: 40px;
     }
     footer {
       background-color: rgb(241, 241, 241);
       color: #727272;
       text-align: center;
-      padding: 0;
+      padding: 10px 0;
       font-size: smaller;
       position: fixed;
       width: 100%;
@@ -87,11 +76,47 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-
     @keyframes spin {
       to {
         transform: rotate(360deg);
       }
+    }
+    .table-container {
+      margin-top: 20px;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead {
+      display: none;
+      background-color: #007bff;
+      color: #fff;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 15px;
+    }
+    th {
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    tbody tr {
+      border-bottom: 1px solid #ddd;
+    }
+    tbody tr:hover {
+      background-color: #f1f1f1;
+      cursor: pointer;
+    }
+    tbody tr:hover td {
+      color: #007bff;
+    }
+    tbody tr:last-child {
+      border-bottom: none;
     }
   </style>
 </head>
@@ -107,7 +132,19 @@
     </div>
     <div id="result">
       <p class="message" id="message"></p>
-      <ul id="beneficiosList"></ul>
+      <div class="table-container">
+        <table id="beneficiosTable">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Tipo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Os dados serão adicionados aqui -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -119,13 +156,15 @@
     async function buscarBeneficios() {
       const cpf = document.getElementById("cpfInput").value.trim();
       const messageElement = document.getElementById("message");
-      const beneficiosList = document.getElementById("beneficiosList");
+      const beneficiosTableBody = document.querySelector("#beneficiosTable tbody");
       const searchButton = document.getElementById("searchButton");
       const spinner = document.getElementById("spinner");
       const buttonText = document.getElementById('buttonText');
+      const tableHeader = document.querySelector("#beneficiosTable thead");
 
       messageElement.textContent = "";
-      beneficiosList.innerHTML = "";
+      beneficiosTableBody.innerHTML = "";
+      tableHeader.style.display = "none";
 
       const cpfNormalized = cpf.replace(/[^\d]/g, '');
       if (cpfNormalized.length !== 11) {
@@ -144,7 +183,6 @@
         const response = await fetch(`http://www.localhost:3333/api/v1/benefits?cpf=${cpfNormalized}`);
         const result = await response.json();
 
-
         if (response.status === 202) {
           inProcess = true
           messageElement.textContent = result.message;
@@ -159,13 +197,19 @@
 
         if (result.statusCode === 200 && result.data.beneficios.length > 0) {
           result.data.beneficios.forEach(beneficio => {
-            const item = document.createElement("li");
-            item.textContent = `Número: ${beneficio.numero_beneficio}, Tipo: ${beneficio.codigo_tipo_beneficio}`;
-            beneficiosList.appendChild(item);
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${beneficio.numero_beneficio}</td>
+              <td>${beneficio.codigo_tipo_beneficio}</td>
+            `;
+            beneficiosTableBody.appendChild(row);
           });
+          tableHeader.style.display = "table-header-group";
         } else if (result.statusCode === 200) {
+          tableHeader.style.display = "none";
           messageElement.textContent = "Não há benefícios para este usuário.";
         } else {
+          tableHeader.style.display = "none";
           messageElement.textContent = "Erro na busca. Tente novamente mais tarde.";
         }
       } catch (error) {
