@@ -54,14 +54,14 @@ export class RabbitMQService implements OnModuleInit {
         this.logger.warn(`Duplicated message ignored CPF:"${cpf}"`);
         return;
       }
-      await this.redisService.set(`deduplication-${cpf}`, 'processed');
+      await this.redisService.set(`deduplication-${cpf}`, 'processed', 300);
 
       const benefits = await this.getBenefitsUser(cpf);
 
       const index = await this.searchService.indexData(benefits, indexName);
       await this.redisService.set(cpf, index);
     } catch (error) {
-      await this.redisService.set(`deduplication-${cpf}`, 'error');
+      await this.redisService.set(`deduplication-${cpf}`, 'error', 300);
 
       this.logger.error(
         `Erro no processamento do CPF: ${cpf} - ${error.message}`,
@@ -70,9 +70,7 @@ export class RabbitMQService implements OnModuleInit {
     }
   }
 
-  private async getBenefitsUser(
-    cpf: string,
-  ): Promise<FetchBenefitsResponseDTO> {
+  async getBenefitsUser(cpf: string): Promise<FetchBenefitsResponseDTO> {
     const baseUrl = this.envService.get('KONSI_BASE_URL');
     const url = `${baseUrl}/api/v1/inss/consulta-beneficios?cpf=${cpf}`;
     const jwt = await this.authService.getToken();

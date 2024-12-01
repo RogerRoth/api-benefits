@@ -7,12 +7,12 @@ import { RabbitMQModule } from './rabbitMQ/rabbitmq.module';
 
 @Module({
   imports: [
-    BenefitsModule,
     ConfigModule.forRoot({
       validate: (env) => envSchema.parse(env),
       isGlobal: true,
     }),
     EnvModule,
+    BenefitsModule,
     RabbitMQModule,
   ],
 })
