@@ -16,6 +16,7 @@
       max-width: 600px;
       margin: 100px auto 20px;
       text-align: center;
+      padding-bottom: 60px
     }
     .input-group {
       display: flex;
@@ -28,10 +29,11 @@
     }
     input {
       padding: 10px;
-      width: 80%;
+      width: 150px;
       margin-right: 10px;
       border-radius: 4px;
       border: 1px solid #ddd;
+      font-size: medium;
     }
     button {
       padding: 2px 2px;
@@ -41,27 +43,30 @@
       border-radius: 4px;
       cursor: pointer;
       width: 120px;
-      height: 37px;
+      height: 40px;
+      font-size: medium;
     }
     button:disabled {
       background-color: #5ba3f0;
       cursor: not-allowed;
     }
     .message {
-      color: red;
+      color: rgb(241, 60, 26);
       font-weight: 400;
-      margin-top: 10px;
-      height: 40px;
+      height: 30px;
     }
     footer {
       background-color: rgb(241, 241, 241);
       color: #727272;
       text-align: center;
-      padding: 10px 0;
       font-size: smaller;
       position: fixed;
       width: 100%;
+      height: 50px;
       bottom: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     footer a {
       color: #00aced;
@@ -124,14 +129,16 @@
   <div class="container">
     <h1>Consulta de Benefícios</h1>
     <div class="input-group">
-      <input type="text" id="cpfInput" placeholder="Digite o CPF" />
+      <input type="text" id="cpfInput" placeholder="Digite o CPF" maxlength="14" inputmode="numeric" />
       <button id="searchButton" onclick="buscarBeneficios()">
         <span id="spinner" class="spinner" style="display:none;"></span>
         <span id="buttonText">Buscar</span>
       </button>
     </div>
-    <div id="result">
+    <div class="message-info">
       <p class="message" id="message"></p>
+    </div>
+    <div id="result">
       <div class="table-container">
         <table id="beneficiosTable">
           <thead>
@@ -152,7 +159,22 @@
     <p>Made with ♥️ by <a href="https://github.com/RogerRoth" target="_blank">RogerRoth</a></p>
   </footer>
 
+  <script src="https://unpkg.com/vanilla-masker/build/vanilla-masker.min.js"></script>
   <script>
+    VMasker(document.getElementById("cpfInput")).maskPattern("999.999.999-99");
+
+    let apiUrl = '';
+
+    window.addEventListener('load', async () => {
+      try {
+        const configResponse = await fetch('/config.json');
+        const config = await configResponse.json();
+        apiUrl = config.apiUrl;
+      } catch (error) {
+        console.error('Erro ao carregar a configuração:', error);
+      }
+    });
+
     async function buscarBeneficios() {
       const cpf = document.getElementById("cpfInput").value.trim();
       const messageElement = document.getElementById("message");
@@ -165,42 +187,41 @@
       messageElement.textContent = "";
       beneficiosTableBody.innerHTML = "";
       tableHeader.style.display = "none";
-
-      const cpfNormalized = cpf.replace(/[^\d]/g, '');
-      if (cpfNormalized.length !== 11) {
+      
+      if (!validarCPF(cpf)) {
         messageElement.textContent = "CPF inválido. Por favor, insira um CPF válido.";
         return;
-      }
-
-
+      } 
+      
+      
       let inProcess = false
-
+      
       searchButton.disabled = true;
       spinner.style.display = 'inline-block';
       buttonText.style.display = 'none';
-
+      
       try {
-        const response = await fetch(`http://www.localhost:3333/api/v1/benefits?cpf=${cpfNormalized}`);
+        const response = await fetch(`${apiUrl}/benefits?cpf=${cpf}`);
         const result = await response.json();
-
+        
         if (response.status === 202) {
           inProcess = true
           messageElement.textContent = result.message;
-
+          
           setTimeout(() => {
             searchButton.disabled = false;
             spinner.style.display = 'none';
             buttonText.style.display = 'inline';
-          }, 10000);
+          }, 5000);
           return;
         }
-
+        
         if (result.statusCode === 200 && result.data.beneficios.length > 0) {
           result.data.beneficios.forEach(beneficio => {
             const row = document.createElement("tr");
             row.innerHTML = `
-              <td>${beneficio.numero_beneficio}</td>
-              <td>${beneficio.codigo_tipo_beneficio}</td>
+            <td>${beneficio.numero_beneficio}</td>
+            <td>${beneficio.codigo_tipo_beneficio}</td>
             `;
             beneficiosTableBody.appendChild(row);
           });
@@ -224,6 +245,37 @@
         }
       }
     }
+    
+    function validarCPF(cpf) {
+      cpf = cpf.replace(/[^\d]+/g, '');
+      
+      if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) {
+        return false;
+      }
+      
+      let soma = 0;
+      for (let i = 0; i < 9; i++) {
+        soma += parseInt(cpf.charAt(i)) * (10 - i);
+      }
+      let resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.charAt(9))) {
+        return false;
+      }
+      
+      soma = 0;
+      for (let i = 0; i < 10; i++) {
+        soma += parseInt(cpf.charAt(i)) * (11 - i);
+      }
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.charAt(10))) {
+        return false;
+      }
+
+      return true;
+    }
+
   </script>
 </body>
 </html>
