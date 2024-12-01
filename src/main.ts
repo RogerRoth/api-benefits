@@ -4,11 +4,18 @@ import { EnvService } from './env/env.service';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppLoggerService } from './utils/logger/app-logger.service';
 import { AllExceptionsFilter } from './utils/filters/all-exceptions.filter';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: new AppLoggerService(), // Usa o LoggerService customizado
   });
+
+  app.enableCors();
+
+  app.useStaticAssets(join(__dirname, '..', 'public'));
+
   const logger = app.get(AppLoggerService);
 
   const envService = app.get(EnvService);
@@ -31,6 +38,8 @@ async function bootstrap() {
       },
     },
   });
+
+  app.setGlobalPrefix('api/v1');
 
   app.useGlobalFilters(new AllExceptionsFilter(logger));
 

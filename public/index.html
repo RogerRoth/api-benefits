@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consulta de Benefícios</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin-top: 100px;
+      margin-right: 0px;
+      margin-bottom: 20px;
+      margin-left: 0px;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .input-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    h1 {
+      color: #3b3b3b;
+      font-weight: 500;
+    }
+    input {
+      padding: 10px;
+      width: 80%;
+      margin-right: 10px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    button {
+      padding: 2px 2px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 120px;
+      height: 37px;
+    }
+    button:disabled {
+      background-color: #5ba3f0;
+      cursor: not-allowed;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      background: #f4f4f4;
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+    }
+    .message {
+      color: red;
+      font-weight: 400;
+    }
+    footer {
+      background-color: rgb(241, 241, 241);
+      color: #727272;
+      text-align: center;
+      padding: 0;
+      font-size: smaller;
+      position: fixed;
+      width: 100%;
+      bottom: 0;
+    }
+    footer a {
+      color: #00aced;
+      text-decoration: none;
+    }
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 4px solid rgba(0, 0, 0, 0.2);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Consulta de Benefícios</h1>
+    <div class="input-group">
+      <input type="text" id="cpfInput" placeholder="Digite o CPF" />
+      <button id="searchButton" onclick="buscarBeneficios()">
+        <span id="spinner" class="spinner" style="display:none;"></span>
+        <span id="buttonText">Buscar</span>
+      </button>
+    </div>
+    <div id="result">
+      <p class="message" id="message"></p>
+      <ul id="beneficiosList"></ul>
+    </div>
+  </div>
+
+  <footer>
+    <p>Made with ♥️ by <a href="https://github.com/RogerRoth" target="_blank">RogerRoth</a></p>
+  </footer>
+
+  <script>
+    async function buscarBeneficios() {
+      const cpf = document.getElementById("cpfInput").value.trim();
+      const messageElement = document.getElementById("message");
+      const beneficiosList = document.getElementById("beneficiosList");
+      const searchButton = document.getElementById("searchButton");
+      const spinner = document.getElementById("spinner");
+      const buttonText = document.getElementById('buttonText');
+
+      messageElement.textContent = "";
+      beneficiosList.innerHTML = "";
+
+      const cpfNormalized = cpf.replace(/[^\d]/g, '');
+      if (cpfNormalized.length !== 11) {
+        messageElement.textContent = "CPF inválido. Por favor, insira um CPF válido.";
+        return;
+      }
+
+
+      let inProcess = false
+
+      searchButton.disabled = true;
+      spinner.style.display = 'inline-block';
+      buttonText.style.display = 'none';
+
+      try {
+        const response = await fetch(`http://www.localhost:3333/api/v1/benefits?cpf=${cpfNormalized}`);
+        const result = await response.json();
+
+
+        if (response.status === 202) {
+          inProcess = true
+          messageElement.textContent = result.message;
+
+          setTimeout(() => {
+            searchButton.disabled = false;
+            spinner.style.display = 'none';
+            buttonText.style.display = 'inline';
+          }, 10000);
+          return;
+        }
+
+        if (result.statusCode === 200 && result.data.beneficios.length > 0) {
+          result.data.beneficios.forEach(beneficio => {
+            const item = document.createElement("li");
+            item.textContent = `Número: ${beneficio.numero_beneficio}, Tipo: ${beneficio.codigo_tipo_beneficio}`;
+            beneficiosList.appendChild(item);
+          });
+        } else if (result.statusCode === 200) {
+          messageElement.textContent = "Não há benefícios para este usuário.";
+        } else {
+          messageElement.textContent = "Erro na busca. Tente novamente mais tarde.";
+        }
+      } catch (error) {
+        console.error("Erro ao buscar benefícios:", error);
+        messageElement.textContent = "Erro ao processar a solicitação.";
+      } finally {
+        console.log('finally')
+        if(!inProcess){
+          searchButton.disabled = false;
+          spinner.style.display = 'none';
+          buttonText.style.display = 'inline';
+        }
+      }
+    }
+  </script>
+</body>
+</html>
