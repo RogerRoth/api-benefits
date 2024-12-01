@@ -38,3 +38,30 @@ services:
         limits:
           memory: 512M
           cpus: "0.7"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - PORT=${PORT}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE}
+      - RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS=${RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS}
+      - REDIS_HOST=${REDIS_URL}
+      - ELASTICSEARCH_HOST=${ELASTIC_SEARCH_URL}
+    depends_on:
+      - rabbitmq
+      - redis
+      - elasticsearch
+
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./public:/usr/share/nginx/html
+    depends_on:
+      - api
