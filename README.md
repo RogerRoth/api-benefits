@@ -97,6 +97,32 @@ Para parar os contêineres, use o comando:
 ```bash
 docker-compose down
 ```
+
+### Exemplo de Requisição à API
+
+Abaixo está um exemplo de como consultar os benefícios de um usuário através de um CPF:
+
+```bash
+curl --request GET \
+  --url 'http://localhost:3333/api/v1/benefits?cpf=416.243.300-37'
+```
+
+Resposta Esperada:
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "cpf": "41624330037",
+    "beneficios": [
+      {
+        "numero_beneficio": "1234567890",
+        "codigo_tipo_beneficio": "00"
+      }
+    ]
+  }
+}
+```
+
 ### Testes Unitários
 Os testes unitários são importantes para garantir que cada parte da aplicação funcione corretamente de forma isolada. Este projeto utiliza o framework de testes **Vitest** para realizar os testes unitários.
 
