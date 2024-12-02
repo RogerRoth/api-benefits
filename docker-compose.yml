@@ -9,6 +9,11 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
     deploy:
       resources:
         limits:
@@ -20,6 +25,11 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -31,8 +41,14 @@ services:
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://elasticsearch:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 35
     deploy:
       resources:
         limits:
@@ -43,25 +59,43 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: api
     ports:
       - "${PORT}:${PORT}"
     environment:
       - PORT=${PORT}
+      - KONSI_BASE_URL=${KONSI_BASE_URL}
+      - KONSI_AUTH_USER=${KONSI_AUTH_USER}
+      - KONSI_AUTH_PASSWORD=${KONSI_AUTH_PASSWORD}
+      - ELASTIC_SEARCH_URL=${ELASTIC_SEARCH_URL}
+      - ELASTIC_SEARCH_USERNAME=${ELASTIC_SEARCH_USERNAME}
+      - ELASTIC_SEARCH_PASSWORD=${ELASTIC_SEARCH_PASSWORD}
       - RABBITMQ_URL=${RABBITMQ_URL}
       - RABBITMQ_QUEUE=${RABBITMQ_QUEUE}
       - RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS=${RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS}
-      - REDIS_HOST=${REDIS_URL}
-      - ELASTICSEARCH_HOST=${ELASTIC_SEARCH_URL}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - REDIS_URL=${REDIS_URL}
     depends_on:
-      - rabbitmq
-      - redis
-      - elasticsearch
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PORT}/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
 
   web:
     image: nginx:alpine
+    container_name: web
     ports:
       - "80:80"
     volumes:
       - ./public:/usr/share/nginx/html
     depends_on:
-      - api
+      api:
+        condition: service_healthy

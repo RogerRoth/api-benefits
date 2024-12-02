@@ -1,19 +1,32 @@
-# Dockerfile
-FROM node:22-alpine
 
-# Create app directory
-WORKDIR /usr/src/app
+FROM node:18-alpine
+# FROM node:22-alpine
 
-# Install app dependencies
+RUN echo "Configuração de ambiente:" && env
+
+RUN apk add --no-cache curl
+
+# Configurar o diretório de trabalho
+WORKDIR /app
+
+# Copiar apenas os arquivos necessários para instalar as dependências
 COPY package*.json ./
 
+# Instalar apenas as dependências de produção
+# RUN npm ci --omit=dev
 RUN npm install
 
-# Bundle app source
+# Copiar o restante do código-fonte da aplicação
 COPY . .
 
-# Copy static files
-COPY public ./public
+# COPY public ./public
+# COPY .env .env
 
+# Compilar o projeto NestJS
+RUN npm run build
+
+# Expor a porta configurada (ajuste conforme necessário)
 EXPOSE 3333
-CMD [ "npm", "run", "start:prod" ]
+
+# Comando para iniciar a aplicação no modo de produção
+CMD ["npm", "run", "start:prod"]
