@@ -73,7 +73,7 @@ Use o Docker Compose para inicializar o ambiente:
 ```bash
 docker-compose up --build -d
 ```
-Aguarde todos os serviços inicializarem, há um healthcheck para garantir que todos os serviços subam de acordo com a ordem necessária.
+Aguarde todos os serviços inicializarem, há um *health check* para garantir que todos os serviços subam de acordo com a ordem necessária.
 
 ###  4. Verifique o Status dos Contêineres
 Caso necessário, verifique o status dos contêineres:
@@ -88,7 +88,7 @@ A aplicação web esta rodando através do servidor **Nginx**, basta acessar a U
 ```bash
 http://localhost
 ```
-![Pagina web](assets/web_page.png)
+![Pagina web](assets/web_page_view.png)
 
 Exibição dos benefícios pela página web.
 
