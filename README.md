@@ -1,4 +1,4 @@
-# Konsi Benefícios API
+# API Benefícios
 
 <div align="center">
   <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
@@ -12,9 +12,9 @@
 
 ---
 
-Este projeto faz parte de um desafio proposto pela Konsi, é uma API desenvolvida em **NestJS** para lidar com mensagens e comunicação entre diferentes serviços, utilizando **RabbitMQ**, **Redis**, e **Elasticsearch**. Ele inclui uma página estática hospedada via **Nginx**.
+Este projeto tem como objetivo implementar uma API desenvolvida em **NestJS** para gerenciar mensagens e comunicação entre diferentes serviços, utilizando **RabbitMQ**, **Redis** e **Elasticsearch**. Além disso, o projeto inclui uma página estática hospedada via **Nginx**.
 
-O desafio é fazer uma API que busque e retorne a matrícula do servidor em uma determinada API externa.
+A API é responsável por buscar e retornar a matrícula de um servidor a partir de uma API externa.
 
 ---
 
@@ -39,27 +39,27 @@ O usuário acessa uma página web, preenche o CPF e realiza uma busca. A requisi
 Clone o repositório para o seu ambiente local:
 
 ```bash
-git clone https://github.com/RogerRoth/konsi-api-beneficios.git
-cd konsi-api-beneficios
+git clone https://github.com/RogerRoth/api-benefits.git
+cd api-benefits
 ```
 
 ###  2. Crie o Arquivo .env
 Crie um arquivo .env copiando o .env.EXAMPLE na raiz do projeto. Abaixo deixo as variáveis de ambiente não sensíveis:
 
 ```
-KONSI_BASE_URL = ''
-KONSI_AUTH_USER = ''
-KONSI_AUTH_PASSWORD = ''
+BASE_URL = ''
+AUTH_USER = ''
+AUTH_PASSWORD = ''
 
 ELASTIC_SEARCH_URL='http://elasticsearch:9200'
 ELASTIC_SEARCH_USERNAME='elastic'
 ELASTIC_SEARCH_PASSWORD='password'
 
 
-RABBITMQ_URL='amqp://konsi:123456@rabbitmq:5672'
+RABBITMQ_URL='amqp://admin:123456@rabbitmq:5672'
 RABBITMQ_QUEUE='cpf_queue'
 RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS=90
-RABBITMQ_DEFAULT_USER='konsi'
+RABBITMQ_DEFAULT_USER='admin'
 RABBITMQ_DEFAULT_PASS='123456'
 
 REDIS_URL='redis://redis:6379'
